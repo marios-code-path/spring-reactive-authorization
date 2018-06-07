@@ -16,6 +16,14 @@ import java.time.Duration;
 @Slf4j
 public class RestController {
 
+    Mono<ServerResponse> handleSpecialRoute(ServerRequest request) {
+        return ServerResponse
+                .ok()
+                .body(request.principal().repeat().zipWith(
+                        Mono.just("I am a user named: "),
+                        (p, s) -> s + p.getName()), String.class);
+    }
+
     Mono<ServerResponse> handleNameRequest(ServerRequest request) {
         return ServerResponse
                 .ok() // how to set the anonymous user BEFORE the request sees the principal?
@@ -26,7 +34,8 @@ public class RestController {
 
     @Bean
     RouterFunction<?> routes() {
-        return RouterFunctions.route(RequestPredicates.GET("/names"), this::handleNameRequest);
+        return RouterFunctions.route(RequestPredicates.GET("/names"), this::handleNameRequest)
+                .andRoute(RequestPredicates.GET("/special"), this::handleSpecialRoute);
     }
 
     // TODO this is a kludge, or is it?

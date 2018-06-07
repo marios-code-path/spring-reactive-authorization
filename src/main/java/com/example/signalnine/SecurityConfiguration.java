@@ -2,16 +2,18 @@ package com.example.signalnine;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.stereotype.Component;
@@ -22,31 +24,35 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 @Slf4j
+@Configuration
 public class SecurityConfiguration {
     private final AuthenticationManager authenticationManager;
 
-    public SecurityConfiguration(AuthenticationManager authMan) {
-        this.authenticationManager = authMan;
+    public SecurityConfiguration(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
     }
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        http.authenticationManager(authenticationManager);
+        http.authenticationManager(this.authenticationManager);
 
         return http.authorizeExchange()
-                .pathMatchers("/primes")
+                .pathMatchers("/special")
                 .access((mono, context) -> mono
-                        .map(auth -> UserDetails.class.cast(auth.getPrincipal()))
-                        .map(u -> !u.getUsername().isEmpty())
+                        .doOnNext(auth -> log.info("PRINCIPAL: " + auth.getPrincipal()))
+                        .map(n -> true)
                         .map(AuthorizationDecision::new)
                 )
+                .pathMatchers("/primes")
+                .hasRole("ROLE_USER")
                 .and()
                 .authorizeExchange()
                 .pathMatchers("/users")
-                .hasRole("ADMIN")
+                .hasRole("ROLE_ADMIN")
                 .and()
                 .httpBasic()
                 .and()
@@ -54,13 +60,14 @@ public class SecurityConfiguration {
     }
 }
 
-
-class SignalAuthenticationProvider implements AuthenticationProvider {
+@Component
+@Slf4j
+class AuthenticationManager implements ReactiveAuthenticationManager {
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        final SignalAuthenticationToken auth = SignalAuthenticationToken.class.cast(authentication);
+    public Mono<Authentication> authenticate(Authentication authentication) {
         final SignalUser anonymousUser = new SignalUser(0L, "ANONYMOUS");
 
+        log.info("AUTHENTICATE CALLS");
         //!! Instrument a UserDetails Service to handle this bit of logic:
         Collection<SignalUser> users = Arrays.asList(
                 new SignalUser(1L, "Mario"),
@@ -74,11 +81,14 @@ class SignalAuthenticationProvider implements AuthenticationProvider {
         authoritiesMap.put(3L, Arrays.asList((GrantedAuthority) () -> "ROLE_ADMIN"));
         authoritiesMap.put(0L, Arrays.asList((GrantedAuthority) () -> "ROLE_ANONYMOUS"));
 
+        //SignalAuthenticationToken auth = SignalAuthenticationToken.class.cast(authentication);
+        UsernamePasswordAuthenticationToken auth = UsernamePasswordAuthenticationToken.class.cast(authentication);
+
 // Authenticate as anonymous when user/password is not present.
 // Perhaps signal if web security supports this (@EnableAnonymous, etc...)
         if ((auth.getName() == null || auth.getName().isEmpty()) &&
                 (auth.getCredentials() == null || auth.getCredentials().toString().isEmpty()))
-            return new SignalAuthenticationToken(authoritiesMap.get(anonymousUser.getId()), anonymousUser);
+            return Mono.just(new SignalAuthenticationToken(authoritiesMap.get(anonymousUser.getId()), anonymousUser));
 
 // Validates any password, but must have username in users collection
         if (auth.getCredentials().toString().isEmpty() ||
@@ -91,27 +101,7 @@ class SignalAuthenticationProvider implements AuthenticationProvider {
                 .findFirst()
                 .orElse(anonymousUser);
 
-        return new SignalAuthenticationToken(authoritiesMap.get(authUser), authUser);
-    }
-
-    @Override
-    public boolean supports(Class<?> authentication) {
-        return SignalAuthenticationToken.class.equals(authentication);
-    }
-}
-
-@Component
-@Slf4j
-class AuthenticationManager implements ReactiveAuthenticationManager {
-
-    @Override
-    public Mono<Authentication> authenticate(Authentication authentication) {
-        // JwtAuthenticationToken is my custom token.
-        if (authentication instanceof SignalAuthenticationToken) {
-            log.info("User login: " + SignalAuthenticationToken.class.cast(authentication).getName());
-            authentication.setAuthenticated(true);
-        }
-        return Mono.just(authentication);
+        return Mono.just(new SignalAuthenticationToken(authoritiesMap.get(authUser.getId()), authUser));
     }
 }
 
