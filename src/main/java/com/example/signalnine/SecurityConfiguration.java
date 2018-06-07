@@ -72,7 +72,7 @@ class AuthenticationManager implements ReactiveAuthenticationManager {
         );
 
         Map<Long, Collection<GrantedAuthority>> authoritiesMap = new TreeMap<>();
-        authoritiesMap.put(1L, Arrays.asList((GrantedAuthority) () -> "USER"));
+        authoritiesMap.put(1L, Arrays.asList((GrantedAuthority) () -> "ROLE_USER"));
         authoritiesMap.put(2L, Arrays.asList((GrantedAuthority) () -> "USER"));
         authoritiesMap.put(3L, Arrays.asList((GrantedAuthority) () -> "ROLE_ADMIN"));
         authoritiesMap.put(0L, Arrays.asList((GrantedAuthority) () -> "ROLE_ANONYMOUS"));
@@ -97,7 +97,11 @@ class AuthenticationManager implements ReactiveAuthenticationManager {
                 .findFirst()
                 .orElse(anonymousUser);
 
-        return Mono.just(new SignalAuthenticationToken(authoritiesMap.get(authUser.getId()), authUser));
+        SignalAuthenticationToken token =
+                new SignalAuthenticationToken(authoritiesMap.get(authUser.getId()), authUser);
+        token.setAuthenticated(true);
+
+        return Mono.just(token);
     }
 }
 
