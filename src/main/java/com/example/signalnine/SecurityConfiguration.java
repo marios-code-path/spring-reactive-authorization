@@ -40,7 +40,7 @@ public class SecurityConfiguration {
         return http
                 .authorizeExchange()
                     .pathMatchers("/primes")
-                        .hasRole("ROLE_USER")
+                        .hasRole("USER")
                     .pathMatchers("/zero")
                         .permitAll()
                     .pathMatchers("/special")
@@ -49,7 +49,7 @@ public class SecurityConfiguration {
                             .map(AuthorizationDecision::new)
                         )
                     .pathMatchers("/users")
-                        .hasRole("ROLE_ADMIN")
+                        .hasAuthority("ADMIN")
                 .and()
                     .httpBasic()
                 .and()
@@ -72,8 +72,8 @@ class AuthenticationManager implements ReactiveAuthenticationManager {
         );
 
         Map<Long, Collection<GrantedAuthority>> authoritiesMap = new TreeMap<>();
-        authoritiesMap.put(1L, Arrays.asList((GrantedAuthority) () -> "ROLE_USER"));
-        authoritiesMap.put(2L, Arrays.asList((GrantedAuthority) () -> "ROLE_USER"));
+        authoritiesMap.put(1L, Arrays.asList((GrantedAuthority) () -> "USER"));
+        authoritiesMap.put(2L, Arrays.asList((GrantedAuthority) () -> "USER"));
         authoritiesMap.put(3L, Arrays.asList((GrantedAuthority) () -> "ROLE_ADMIN"));
         authoritiesMap.put(0L, Arrays.asList((GrantedAuthority) () -> "ROLE_ANONYMOUS"));
 
