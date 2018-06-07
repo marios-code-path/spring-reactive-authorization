@@ -1,129 +1,76 @@
 package com.example.signalnine;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
-import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.reactive.config.EnableWebFlux;
-import org.springframework.web.reactive.function.server.*;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
+import javax.security.auth.Subject;
+import java.io.Serializable;
 import java.security.Principal;
-import java.time.Duration;
+import java.util.Collection;
 
+/**
+ * objective to this demo:
+ * <p>
+ * Demonstrate consumption of n client-credential-protected service
+ * Demonstrate creation of a client-credential protected resource
+ * Demonstrate different security scope ( method-security, endpoint-security )
+ * Setup for demonstrating Propigation of security rules to additional hosts.
+ * <p>
+ * <p>
+ * It should be simple to lock down a typical req->res service using Spring Security
+ * Sure we must setup Authority, and the amount of boilerplate is much lower than with
+ * earlier incarnations.  I feel this current version is 'unfinished' possibly too much
+ * code to make simple things ( client-credential) work. This follows for both Client and
+ * Service configurations.
+ */
 @EnableWebFlux
 @SpringBootApplication
 public class SignalNineApplication {
-
     public static void main(String[] args) {
-        SpringApplication.run(SignalNineApplication.class); //.getBeanFactory().getBean(NettyContext.class).onClose().block();
+        SpringApplication.run(SignalNineApplication.class);
     }
 }
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+class SignalUser implements Principal, Serializable {
+    Long id;
+    String username;
 
-@org.springframework.web.bind.annotation.RestController
-@Slf4j
-class RestController {
-
-    Mono<ServerResponse> handleNames(ServerRequest request) {
-        return ServerResponse.ok().body(Mono.zip(request.principal(), Mono.just(" HERE"),
-                (p, s) -> p.getName() + s), String.class);
+    @Override
+    public String getName() {
+        return username;
     }
 
-    @Bean
-    RouterFunction<?> routes() {
-        return RouterFunctions.route(RequestPredicates.GET("/names"), this::handleNames);
-    }
-
-    // TODO this is a kludge, or is it?
-    @GetMapping(value = "/primes", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent> primeFlux(Mono<Principal> principal) {
-        return Flux.interval(Duration.ofMillis(250))
-                .zipWith(principal.repeat(), //.or(Mono.just(ANONYMOUS_USER))repeat(),
-                        (n, user) -> ServerSentEvent.builder()
-                                .data(user.getName() + " " + (n + (is_prime(n) ? "!" : "")))
-                                .id(n + "-id")
-                                .event("NUMBER")
-                                .build()
-                );
-    }
-
-    // brute-force search :p
-    boolean is_prime(long num) {
-        if (num <= 1) return false;
-        if (num % 2 == 0 && num > 2) return false;
-        for (int i = 3; i < num / 2; i += 2) {
-            if (num % i == 0)
-                return false;
-        }
+    @Override   // asks: is this a lowest-level User Principal ?
+    public boolean implies(Subject subject) {
         return true;
     }
 }
 
-@Component
-@Slf4j
-class ExampleWebFilter implements WebFilter {
+class SignalAuthenticationToken extends AbstractAuthenticationToken {
+    private final SignalUser user;
+
+    public SignalAuthenticationToken(Collection<? extends GrantedAuthority> authorities, SignalUser user) {
+        super(authorities);
+        this.user = user;
+    }
 
     @Override
-    public Mono<Void> filter(ServerWebExchange serverWebExchange,
-                             WebFilterChain webFilterChain) {
-        serverWebExchange.getPrincipal().doOnNext(p -> serverWebExchange.getAttributes().putIfAbsent("user", p)).repeat();
-        return webFilterChain.filter(serverWebExchange);
+    public Object getCredentials() {
+        return "";
+    }
+
+    @Override
+    public Object getPrincipal() {
+        return this.user;
     }
 }
 
-@EnableWebFluxSecurity
-@EnableReactiveMethodSecurity
-@Slf4j
-class SecurityConfig {
-
-    @Bean
-    public AnonymousAuthenticationFilter anonFilter() {
-        return new AnonymousAuthenticationFilter("example");
-    }
-
-    @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        return http.authorizeExchange()
-                .pathMatchers("/primes")
-                .access((mono, context) -> mono
-                        .map(auth -> UserDetails.class.cast(auth.getPrincipal()))
-                        .map(u -> {log.info("Seen a primes request for" + u.getUsername()); return true;})//u.isEnabled() || u.getUsername().endsWith("mgray"))
-                        .map(AuthorizationDecision::new)
-                )
-                .anyExchange()
-                .permitAll()
-                .and()
-                .httpBasic()
-                .and()
-                .build();
-    }
-
-    @Bean
-    public MapReactiveUserDetailsService userDetailsService() {
-        UserDetails user = User.withDefaultPasswordEncoder()
-                .username("mgray")
-                .password("password")
-                .roles("USER")
-                .build();
-        return new MapReactiveUserDetailsService(user);
-    }
-
-}
