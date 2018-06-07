@@ -3,16 +3,13 @@ package com.example.signalnine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -40,21 +37,21 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http.authenticationManager(this.authenticationManager);
 
-        return http.authorizeExchange()
-                .pathMatchers("/special")
-                .access((mono, context) -> mono
-                        .doOnNext(auth -> log.info("PRINCIPAL: " + auth.getPrincipal()))
-                        .map(n -> true)
-                        .map(AuthorizationDecision::new)
-                )
-                .pathMatchers("/primes")
-                .hasRole("ROLE_USER")
-                .and()
+        return http
                 .authorizeExchange()
-                .pathMatchers("/users")
-                .hasRole("ROLE_ADMIN")
+                    .pathMatchers("/primes")
+                        .hasRole("ROLE_USER")
+                    .pathMatchers("/zero")
+                        .permitAll()
+                    .pathMatchers("/special")
+                        .access((mono, context) -> mono
+                            .map(n -> SignalUser.class.cast(n.getPrincipal()).getId() < 3)
+                            .map(AuthorizationDecision::new)
+                        )
+                    .pathMatchers("/users")
+                        .hasRole("ROLE_ADMIN")
                 .and()
-                .httpBasic()
+                    .httpBasic()
                 .and()
                 .build();
     }
@@ -67,7 +64,6 @@ class AuthenticationManager implements ReactiveAuthenticationManager {
     public Mono<Authentication> authenticate(Authentication authentication) {
         final SignalUser anonymousUser = new SignalUser(0L, "ANONYMOUS");
 
-        log.info("AUTHENTICATE CALLS");
         //!! Instrument a UserDetails Service to handle this bit of logic:
         Collection<SignalUser> users = Arrays.asList(
                 new SignalUser(1L, "Mario"),
@@ -95,7 +91,7 @@ class AuthenticationManager implements ReactiveAuthenticationManager {
                 !users.stream().anyMatch(p -> p.getUsername().equalsIgnoreCase(auth.getName())))
             throw new UsernameNotFoundException("Access Denied");
 
-// User search would end up handled by the UerDetails Service
+// User search would end up handled by the UserDetails Service
         final SignalUser authUser = users.stream()
                 .filter(p -> p.getUsername().equals(auth.getName()))
                 .findFirst()

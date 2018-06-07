@@ -16,26 +16,37 @@ import java.time.Duration;
 @Slf4j
 public class RestController {
 
-    Mono<ServerResponse> handleSpecialRoute(ServerRequest request) {
-        return ServerResponse
-                .ok()
-                .body(request.principal().repeat().zipWith(
-                        Mono.just("I am a user named: "),
-                        (p, s) -> s + p.getName()), String.class);
-    }
-
     Mono<ServerResponse> handleNameRequest(ServerRequest request) {
         return ServerResponse
                 .ok() // how to set the anonymous user BEFORE the request sees the principal?
-                .body(request.principal().repeat().zipWith(
-                        Mono.just("HERE is "),
-                        (p, s) -> s + p.getName()), String.class);
+                .body(request
+                                .principal()
+                                .repeat()
+                                .zipWith(
+                                        Mono.just("My name is "),
+                                        (p, s) -> s + p.getName()),
+                        String.class);
     }
 
     @Bean
     RouterFunction<?> routes() {
         return RouterFunctions.route(RequestPredicates.GET("/names"), this::handleNameRequest)
-                .andRoute(RequestPredicates.GET("/special"), this::handleSpecialRoute);
+                .andRoute(RequestPredicates.GET("/special"),
+                        r -> ServerResponse
+                                .ok()
+                                .body(r
+                                                .principal()
+                                                .repeat()
+                                                .zipWith(
+                                                        Mono.just(" has access."),
+                                                        (pp, str) -> pp.getName() + str),
+                                        String.class)
+                )
+                .andRoute(RequestPredicates.GET("/zero"),
+                        req -> ServerResponse
+                                .ok()
+                                .body(Mono.just("0"), String.class)
+                );
     }
 
     // TODO this is a kludge, or is it?

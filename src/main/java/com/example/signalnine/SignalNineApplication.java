@@ -1,18 +1,8 @@
 package com.example.signalnine;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.reactive.config.EnableWebFlux;
-
-import javax.security.auth.Subject;
-import java.io.Serializable;
-import java.security.Principal;
-import java.util.Collection;
 
 /**
  * objective to this demo:
@@ -34,43 +24,6 @@ import java.util.Collection;
 public class SignalNineApplication {
     public static void main(String[] args) {
         SpringApplication.run(SignalNineApplication.class);
-    }
-}
-
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-class SignalUser implements Principal, Serializable {
-    Long id;
-    String username;
-
-    @Override
-    public String getName() {
-        return username;
-    }
-
-    @Override   // asks: is this a lowest-level User Principal ?
-    public boolean implies(Subject subject) {
-        return true;
-    }
-}
-
-class SignalAuthenticationToken extends AbstractAuthenticationToken {
-    private final SignalUser user;
-
-    public SignalAuthenticationToken(Collection<? extends GrantedAuthority> authorities, SignalUser user) {
-        super(authorities);
-        this.user = user;
-    }
-
-    @Override
-    public Object getCredentials() {
-        return "";
-    }
-
-    @Override
-    public Object getPrincipal() {
-        return this.user;
     }
 }
 
