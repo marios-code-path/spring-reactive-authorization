@@ -1,27 +1,76 @@
 package com.example.signalnine;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.security.auth.Subject;
-import java.io.Serializable;
-import java.security.Principal;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
-class SignalUser implements Principal, Serializable {
-    Long id;
-    String username;
+public class SignalUser implements UserDetails {
 
-    @Override
-    public String getName() {
-        return username;
+    private final Account account;
+    private final boolean isActive;
+    Collection<GrantedAuthority> authorities;
+
+    public SignalUser(Account account, String roles, boolean isActive) {
+        this.authorities = Arrays.asList(roles.split(","))
+                .stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        this.account = account;
+        this.isActive = isActive;
     }
 
-    @Override   // asks: is this a lowest-level User Principal ?
-    public boolean implies(Subject subject) {
-        return true;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return this.authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return account.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return account.getUsername();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return account.isActive();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return account.isActive();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return account.isActive();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return account.isActive();
+    }
+
+    @Data
+    public static class Account {
+
+        private final String username;
+        private final String password;
+
+
+        public Account(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
     }
 }

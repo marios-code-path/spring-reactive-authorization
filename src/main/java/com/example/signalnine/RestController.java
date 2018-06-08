@@ -23,7 +23,7 @@ public class RestController {
                                 .principal()
                                 .repeat()
                                 .zipWith(
-                                        Mono.just("My name is "),
+                                        Mono.just("Username: "),
                                         (p, s) -> s + p.getName()),
                         String.class);
     }
@@ -49,13 +49,12 @@ public class RestController {
                 );
     }
 
-    // TODO this is a kludge, or is it?
     @GetMapping(value = "/primes", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent> primeFlux(Mono<Principal> principal) {
         return Flux.interval(Duration.ofMillis(250))
                 .zipWith(principal.repeat(),
                         (n, user) -> ServerSentEvent.builder()
-                                .data(user.getName() + " " + (n + (is_prime(n) ? "!" : "")))
+                                .data(user.getName() + " " + (n + (is_prime(n) ? "!" : " ")))
                                 .id(n + "-id")
                                 .event("NUMBER")
                                 .build()
