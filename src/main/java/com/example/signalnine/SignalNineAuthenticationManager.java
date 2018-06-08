@@ -12,13 +12,13 @@ import reactor.util.function.Tuple2;
 
 import java.util.Collection;
 
-@Component
+//@Component
 @Slf4j
 class SignalNineAuthenticationManager implements ReactiveAuthenticationManager {
     private final AccountService accountService;
 
-    SignalNineAuthenticationManager(AccountService userService) {
-        this.accountService = userService;
+    SignalNineAuthenticationManager(AccountService service) {
+        this.accountService = service;
     }
 
     @Override
