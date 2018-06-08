@@ -13,17 +13,15 @@ import java.util.stream.Collectors;
 public class SignalUser implements UserDetails {
 
     private final Account account;
-    private final boolean isActive;
     Collection<GrantedAuthority> authorities;
 
-    public SignalUser(Account account, String roles, boolean isActive) {
+    public SignalUser(Account account, String roles) {
         this.authorities = Arrays.asList(roles.split(","))
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
         this.account = account;
-        this.isActive = isActive;
     }
 
     @Override
@@ -66,11 +64,13 @@ public class SignalUser implements UserDetails {
 
         private final String username;
         private final String password;
+        private final boolean active;
 
-
-        public Account(String username, String password) {
+        public Account(String username, String password, boolean active) {
             this.username = username;
             this.password = password;
+            this.active = active;
         }
+
     }
 }

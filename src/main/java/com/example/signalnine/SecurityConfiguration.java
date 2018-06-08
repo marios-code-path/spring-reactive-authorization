@@ -33,7 +33,10 @@ public class SecurityConfiguration {
                 .permitAll()
                 .pathMatchers("/special")
                 .access((mono, context) -> mono
-                        .map(n -> SignalUser.class.cast(n.getPrincipal()).getId() < 3)
+                        .map(n -> SignalUser.class.cast(n.getPrincipal())
+                                .getAuthorities().stream()
+                                .map(e -> e.getAuthority().equals("ROLE_ADMIN"))
+                                .count() > 0)
                         .map(AuthorizationDecision::new)
                 )
                 .pathMatchers("/users")

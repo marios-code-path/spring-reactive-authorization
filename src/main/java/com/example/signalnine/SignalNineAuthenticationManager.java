@@ -29,19 +29,19 @@ class SignalNineAuthenticationManager implements ReactiveAuthenticationManager {
 // Perhaps signal if web security supports this (@EnableAnonymous, etc...)
         if ((auth.getName() == null || auth.getName().isEmpty()) &&
                 (auth.getCredentials() == null || auth.getCredentials().toString().isEmpty())) {
-            Tuple2<SignalUser, Collection<GrantedAuthority>> anon = accountService.findByUserId(0L);
+            Tuple2<SignalUser, Collection<GrantedAuthority>> anon = null;
             return Mono.just(new SignalAuthenticationToken(anon.getT2(), anon.getT1()));
         }
 
 // Validates any password, but must have username in users collection
-        if (auth.getCredentials().toString().isEmpty() || !accountService.usernameExists(auth.getName()))
+        if (auth.getCredentials().toString().isEmpty())
             throw new UsernameNotFoundException("Access Denied");
 
 // User search would end up handled by the UserDetails Service
-        SignalUser authUser = accountService.findByUsername(auth.getName());
+        SignalUser authUser = null;
 
         SignalAuthenticationToken token =
-                new SignalAuthenticationToken(authoritiesMap.get(authUser.getId()), authUser);
+                new SignalAuthenticationToken(null, authUser);
 
         token.setAuthenticated(true);
 
