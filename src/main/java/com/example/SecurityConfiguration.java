@@ -21,15 +21,15 @@ public class SecurityConfiguration {
 
         return http
                 .authorizeExchange()
-                .pathMatchers("/primes")
-                .hasRole("USER")
+                    .pathMatchers("/primes")
+                        .hasRole("USER")
                 .pathMatchers("/admin")
-                .access((mono, context) -> mono
+                    .access((mono, context) -> mono
                         .map(auth -> auth.getAuthorities().stream()
                                 .filter(e -> e.getAuthority().equals("ROLE_ADMIN"))
                                 .count() > 0)
                         .map(AuthorizationDecision::new)
-                )
+                    )
                 .and()
                 .httpBasic()
                 .and()
