@@ -20,11 +20,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfiguration {
 
     @Bean
-    ReactiveUserDetailsService userDetailsService() {
-        return new AccountService();
-    }
-
-    @Bean
     AnonymousAuthenticationFilter anonymousAuthenticationFilter() {
         return new AnonymousAuthenticationFilter("anonymous");
     }
@@ -39,21 +34,22 @@ public class SecurityConfiguration {
         //http.authenticationManager(this.authenticationManager);
 
         return http
+                .addFilterAt(anonymousAuthenticationFilter())
                 .authorizeExchange()
                 .pathMatchers("/primes")
-                .hasRole("USER")
+                .hasRole("ANONYMOUS,USER")
                 .pathMatchers("/zero")
                 .permitAll()
                 .pathMatchers("/special")
                 .access((mono, context) -> mono
                         .map(n -> SignalUser.class.cast(n.getPrincipal())
                                 .getAuthorities().stream()
-                                .map(e -> e.getAuthority().equals("ROLE_ADMIN"))
+                                .filter(e -> e.getAuthority().equals("ROLE_ADMIN"))
                                 .count() > 0)
                         .map(AuthorizationDecision::new)
                 )
                 .pathMatchers("/users")
-                .hasAuthority("ADMIN")
+                .hasRole("ADMIN")
                 .and()
                 .httpBasic()
                 .and()

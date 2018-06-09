@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.reactive.function.server.*;
 import reactor.core.publisher.Flux;
@@ -15,22 +16,27 @@ import java.time.Duration;
 @org.springframework.web.bind.annotation.RestController
 @Slf4j
 public class RestController {
+    private final AccountService accountService;
 
-    Mono<ServerResponse> handleNameRequest(ServerRequest request) {
+    public RestController(AccountService accountService) {
+        this.accountService = accountService;
+    }
+
+    Mono<ServerResponse> accountNames(ServerRequest request) {
         return ServerResponse
                 .ok() // how to set the anonymous user BEFORE the request sees the principal?
-                .body(request
-                                .principal()
-                                .repeat()
-                                .zipWith(
-                                        Mono.just("Username: "),
-                                        (p, s) -> s + p.getName()),
+                .body(accountService
+                                .getAccountNames()
+                                .zipWith(request.principal().repeat(),
+                                        (n, p) -> n.equalsIgnoreCase(p.getName()) ? n + " (self)" : n)
+                                .collectList()
+                                .map(StringUtils::collectionToCommaDelimitedString),
                         String.class);
     }
 
     @Bean
     RouterFunction<?> routes() {
-        return RouterFunctions.route(RequestPredicates.GET("/names"), this::handleNameRequest)
+        return RouterFunctions.route(RequestPredicates.GET("/users"), this::accountNames)
                 .andRoute(RequestPredicates.GET("/special"),
                         r -> ServerResponse
                                 .ok()

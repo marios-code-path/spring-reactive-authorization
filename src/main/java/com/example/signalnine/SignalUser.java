@@ -1,6 +1,7 @@
 package com.example.signalnine;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +11,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Data
+@Slf4j
 public class SignalUser implements UserDetails {
 
     private final Account account;
@@ -20,7 +22,7 @@ public class SignalUser implements UserDetails {
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-
+    this.authorities.forEach(e -> log.info("e." + e.getAuthority()));
         this.account = account;
     }
 
