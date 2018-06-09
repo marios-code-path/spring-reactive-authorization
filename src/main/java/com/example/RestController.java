@@ -1,69 +1,44 @@
 package com.example;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.reactive.function.server.*;
+import org.springframework.web.reactive.function.server.RequestPredicates;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.security.Principal;
 import java.time.Duration;
 
 @org.springframework.web.bind.annotation.RestController
-@Slf4j
 public class RestController {
-    private final AccountService accountService;
-
-    public RestController(AccountService accountService) {
-        this.accountService = accountService;
-    }
-
-    Mono<ServerResponse> accountNames(ServerRequest request) {
-        return ServerResponse
-                .ok() // how to set the anonymous user BEFORE the request sees the principal?
-                .body(accountService
-                                .getAccountNames()
-                                .zipWith(request.principal().repeat(),
-                                        (n, p) -> n.equalsIgnoreCase(p.getName()) ? n + " (self)" : n)
-                                .collectList()
-                                .map(StringUtils::collectionToCommaDelimitedString),
-                        String.class);
-    }
 
     @Bean
     RouterFunction<?> routes() {
-        return RouterFunctions.route(RequestPredicates.GET("/users"), this::accountNames)
-                .andRoute(RequestPredicates.GET("/special"),
+        return RouterFunctions
+                .route(RequestPredicates.GET("/admin"),
                         r -> ServerResponse
                                 .ok()
-                                .body(r
-                                                .principal()
+                                .body(r.principal()
                                                 .repeat()
                                                 .zipWith(
                                                         Mono.just(" has access."),
                                                         (pp, str) -> pp.getName() + str),
                                         String.class)
                 )
-                .andRoute(RequestPredicates.GET("/zero"),
-                        req -> ServerResponse
+                .andRoute(RequestPredicates.GET("/primes"),
+                        r -> ServerResponse
                                 .ok()
-                                .body(Mono.just("0"), String.class)
-                );
-    }
-
-    @GetMapping(value = "/primes", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent> primeFlux(Mono<Principal> principal) {
-        return Flux.interval(Duration.ofMillis(250))
-                .zipWith(principal.repeat(),
-                        (n, user) -> ServerSentEvent.builder()
-                                .data(user.getName() + " " + (n + (is_prime(n) ? "!" : " ")))
-                                .id(n + "-id")
-                                .event("NUMBER")
-                                .build()
+                                .contentType(MediaType.TEXT_EVENT_STREAM)
+                                .body(
+                                        Flux.interval(Duration.ofMillis(250))
+                                                .filter(this::is_prime)
+                                                .zipWith(r.principal().repeat(),
+                                                        (n, user) -> Long.toString(n)
+                                                ),
+                                        String.class
+                                )
                 );
     }
 

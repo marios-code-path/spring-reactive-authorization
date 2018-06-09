@@ -5,7 +5,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -27,10 +26,6 @@ public class AccountService implements ReactiveUserDetailsService {
                         "luigi", pw.encode("password"), true),
                 "ROLE_ADMIN,ROLE_USER")
         );
-    }
-
-    public Flux<String> getAccountNames() {
-        return Flux.fromStream(this.userAccounts.keySet().stream());
     }
 
     @Override
