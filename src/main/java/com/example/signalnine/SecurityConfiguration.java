@@ -34,10 +34,9 @@ public class SecurityConfiguration {
         //http.authenticationManager(this.authenticationManager);
 
         return http
-                .addFilterAt(anonymousAuthenticationFilter())
                 .authorizeExchange()
                 .pathMatchers("/primes")
-                .hasRole("ANONYMOUS,USER")
+                .hasRole("USER")
                 .pathMatchers("/zero")
                 .permitAll()
                 .pathMatchers("/special")
