@@ -1,4 +1,4 @@
-package com.example.signalnine;
+package com.example;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +8,6 @@ import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
@@ -41,7 +40,7 @@ public class SecurityConfiguration {
                 .permitAll()
                 .pathMatchers("/special")
                 .access((mono, context) -> mono
-                        .map(n -> SignalUser.class.cast(n.getPrincipal())
+                        .map(n -> User.class.cast(n.getPrincipal())
                                 .getAuthorities().stream()
                                 .filter(e -> e.getAuthority().equals("ROLE_ADMIN"))
                                 .count() > 0)

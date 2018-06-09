@@ -1,4 +1,4 @@
-package com.example.signalnine;
+package com.example;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -12,17 +12,16 @@ import java.util.stream.Collectors;
 
 @Data
 @Slf4j
-public class SignalUser implements UserDetails {
+public class User implements UserDetails {
 
     private final Account account;
     Collection<GrantedAuthority> authorities;
 
-    public SignalUser(Account account, String roles) {
+    public User(Account account, String roles) {
         this.authorities = Arrays.asList(roles.split(","))
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-    this.authorities.forEach(e -> log.info("e." + e.getAuthority()));
         this.account = account;
     }
 

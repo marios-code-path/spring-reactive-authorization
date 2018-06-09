@@ -1,6 +1,5 @@
-package com.example.signalnine;
+package com.example;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -13,28 +12,30 @@ import java.util.Map;
 import java.util.TreeMap;
 
 @Service
-@Slf4j
 public class AccountService implements ReactiveUserDetailsService {
     private final PasswordEncoder pw = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
-    Map<String, SignalUser> userAccounts = new TreeMap() {{
-        put("mario", new SignalUser(
-                new SignalUser.Account("mario", pw.encode("password"), true),
+    Map<String, User> userAccounts = new TreeMap();
+
+    public AccountService() {
+        userAccounts.put("mario", new User(
+                new User.Account("mario", pw.encode("password"), true),
                 "ROLE_USER")
         );
-        put("luigi", new SignalUser(
-                new SignalUser.Account(
+        userAccounts.put("luigi", new User(
+                new User.Account(
                         "luigi", pw.encode("password"), true),
                 "ROLE_ADMIN,ROLE_USER")
         );
-    }};
+    }
 
     public Flux<String> getAccountNames() {
         return Flux.fromStream(this.userAccounts.keySet().stream());
     }
+
     @Override
     public Mono<UserDetails> findByUsername(String username) {
-        SignalUser user = userAccounts.getOrDefault(username, null);
+        User user = userAccounts.getOrDefault(username, null);
         return user == null ? Mono.empty() : Mono.just(user);
     }
 }
