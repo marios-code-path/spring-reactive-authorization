@@ -2,6 +2,8 @@ package com.example;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
@@ -13,6 +15,12 @@ import java.time.Duration;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
+
+
+    @GetMapping("/who")
+    Mono<String> who(@AuthenticationPrincipal User user) {
+        return Mono.just("who: " + user.getUsername());
+    }
 
     @Bean
     RouterFunction<?> routes() {

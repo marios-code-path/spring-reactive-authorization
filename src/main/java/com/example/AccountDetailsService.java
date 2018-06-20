@@ -11,12 +11,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 @Service
-public class AccountService implements ReactiveUserDetailsService {
+public class AccountDetailsService implements ReactiveUserDetailsService {
     private final PasswordEncoder pw = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     Map<String, User> userAccounts = new TreeMap();
 
-    public AccountService() {
+    public AccountDetailsService() {
         userAccounts.put("mario", new User(
                 new User.Account("mario", pw.encode("password"), true),
                 "ROLE_USER")
