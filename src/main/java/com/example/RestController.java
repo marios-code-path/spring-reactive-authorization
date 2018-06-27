@@ -19,18 +19,18 @@ public class RestController {
 
 
     @GetMapping("/who")
-    Mono<String> who(@AuthenticationPrincipal ExampleUser user) {
+    Mono<String> who(@AuthenticationPrincipal UserDetails user) {
         return Mono.just("who: " + user.getUsername());
     }
 
     @GetMapping("/who-revised")
     Mono<String> whoRevised(@AuthenticationPrincipal UserDetails user) {
             if(ExampleUser.class.isInstance(user))
-                return Mono.just(user)
-                        .ofType(ExampleUser.class)
-                        .map( u -> "who/custom: " + u.getAccount().getPassword());
+                    return Mono.just(user)
+                            .ofType(ExampleUser.class)
+                            .map( u -> "who/custom: " + u.getAccount().getPassword());
 
-            return Mono.just("who/map-reactive: " + user.getUsername());
+                return Mono.just("who/map-reactive: " + user.getUsername());
     }
 
     @Bean
