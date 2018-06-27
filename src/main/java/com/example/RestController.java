@@ -3,6 +3,7 @@ package com.example;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -18,8 +19,18 @@ public class RestController {
 
 
     @GetMapping("/who")
-    Mono<String> who(@AuthenticationPrincipal User user) {
+    Mono<String> who(@AuthenticationPrincipal ExampleUser user) {
         return Mono.just("who: " + user.getUsername());
+    }
+
+    @GetMapping("/who-revised")
+    Mono<String> whoRevised(@AuthenticationPrincipal UserDetails user) {
+            if(ExampleUser.class.isInstance(user))
+                return Mono.just(user)
+                        .ofType(ExampleUser.class)
+                        .map( u -> "who/custom: " + u.getAccount().getPassword());
+
+            return Mono.just("who/map-reactive: " + user.getUsername());
     }
 
     @Bean

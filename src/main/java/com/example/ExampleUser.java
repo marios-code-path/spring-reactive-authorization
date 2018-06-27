@@ -6,19 +6,20 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Data
 @Slf4j
-public class User implements UserDetails {
+public class ExampleUser implements UserDetails {
 
     private final Account account;
     Collection<GrantedAuthority> authorities;
 
-    public User(Account account, String roles) {
-        this.authorities = Arrays.asList(roles.split(","))
+    public ExampleUser(Account account, String[] roles) {
+        this.authorities = Arrays.asList(roles)
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
@@ -63,9 +64,9 @@ public class User implements UserDetails {
     @Data
     public static class Account {
 
-        private final String username;
-        private final String password;
-        private final boolean active;
+        private String username;
+        private String password;
+        private boolean active;
 
         public Account(String username, String password, boolean active) {
             this.username = username;
