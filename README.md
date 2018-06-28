@@ -12,24 +12,23 @@ To get started, we can call 'start.spring.io' to generate a baseline app with th
  * [WebFlux](https://docs.spring.io/spring/docs/5.0.0.BUILD-SNAPSHOT/spring-framework-reference/html/web-reactive.html) 
  * [Reactive Security 5](https://spring.io/blog/2017/10/04/spring-tips-reactive-spring-security)
  * [lombok](https://projectlombok.org)
- 
-You can additionally download the baseline project from [start.spring.io](http://start.spring.io/starter.zip?type=maven-project&language=java&bootVersion=2.0.3.RELEASE&baseDir=security&groupId=com.example&artifactId=security&name=security&description=Demo+Reactive+Security+Project&packageName=com.example.security&packaging=jar&javaVersion=1.8&autocomplete=&generate-project=&style=security&style=lombok&style=webflux)
 
 Next, lets briefly, and lightly take a look at how this framework puts things together. We can compose our sample app throughout this article while highlighting common and oft-used architectural pieces.
 
 ## Reactive Authorization Components
+How does Spring Security let us describe our security details? 
 
 The [ServerHttpSecurity](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html) 
 is the reactive version for [HttpSecurity](https://docs.spring.io/spring-security/site/docs/5.0.x/api/org/springframework/security/config/annotation/web/builders/HttpSecurity.html) which allows us to program web-based security 
-rules for specific web endpoints. This API harnesses [ServerWebExchangeMatcher](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/util/matcher/ServerWebExchangeMatcher.html)'s
-to setup security rules on our service paths. They are used to configure the [WebFilter](http://WebFilter) security . There are many ServeWebExchangeMatchers, aligned with the DSL that engages the nature of it's configured component. For example, 
+rules for specific web endpoints. We are given a variety of specifications that let us decide on which part of the [ServerWebExchange](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/server/ServerWebExchange.html) we can lock down. To do this, ServerHttpSecurity gives us a few friendly components. For example, using the [AuthorizeExchangeSpec](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.AuthorizeExchangeSpec.html), one can lock down service URI's with Role Based Access Control, custom authorization, or disable authorization altogether. This component additionally lets us harness the [PathPattern](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/util/matcher/PathPatternParserServerWebExchangeMatcher.html) matcher through a method '.pathMatchers(...)'. The 'hasRole(...)' method actually configures an [ReactiveAuthorizationManager](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/authorization/ReactiveAuthorizationManager.html) to check the user's [GrantedAuthority](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/GrantedAuthority.html) assignments. This is a shortcut to 'hasAuthority(...)' method, but requires each authority (aka privilege) be prefixed with 'ROLE_'.
+Lets continue with with [ReactiveAuthorizationManager](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/authorization/ReactiveAuthorizationManager.html) which lets us express how authorization decisions are made. In most cases, we have just the role needed to access a resource. We express authorization this way using [hasRole](https://hasRole) or [hasAuthority](https://hasAuthority) methods. A third method, the 'access(...)' lets us administer customized logic to an endpoint by implementing our own ReactiveAuthorizationManager handler.
 
+Another common component used when calling ServerHttpSecurity is the [CsrfSpec](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.CsrfSpec.html) by calling .csrf() method.  This lets us configure [CSRF](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet) tokens and handlers, or exclude CSRF entirely.
 
-By default, a [HttpServerSecurityConfigurer](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html#securityMatcher-org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher) 
-
-In particular, a [ReactiveAuthorizationManager](https://) lets us express how authorization decisions are made. In most cases, we have just the role needed to access a resource. We express authorization this way using [hasRole](https://hasRole) or [hasAuthority](https://hasAuthority) methods. A third method lets us administer a customized [ReactiveAuthorizationManager] to an endpoint as seen in the sample code below:
+Configured security rules on our service paths (matched exchanges) are ultimately used to program the operations performed within the [WebFilterChain](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/server/WebFilterChain.html). See [WebFilter](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/server/WebFilter.html) for more information on this process. 
 
 As an example:
+
     @EnableWebFluxSecurity
     @EnableReactiveMethodSecurity
     @Configuration
@@ -51,6 +50,7 @@ As an example:
                         .map(AuthorizationDecision::new)
                 )
                 .and()
+                .csrf().disable()
                 .httpBasic()
                 .and()
                 .build();
@@ -59,20 +59,18 @@ As an example:
     }
 
 ## Reactive Authentication Components
-By default, the [ServerHttpSecurity] instance will configure an instance of
+By default, a [HttpServerSecurityConfigurer](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html#securityMatcher-org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher) creates a base-line instance for [ServerHttpSecurity](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html), and will configure an instance of
 [ReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.x/api/org/springframework/security/authentication/ReactiveAuthenticationManager.html)
-which is the reactive component for traditional [AuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.x/api/org/springframework/security/authentication/AuthenticationManager.html)
-whose job it is to facilitate various authentication mechanisms - e.g. HTTP/BASIC is included automatically- in your web application.
+which is the reactive component for traditional [AuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.x/api/org/springframework/security/authentication/AuthenticationManager.html).
+The job of the AuthenticationManager is to facilitate various authentication mechanisms - e.g. HTTP/BASIC is included automatically- in your web application.
  
 NOTE: Spring provides an integration component [ReactiveAuthenticationManagerAdapter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/authentication/ReactiveAuthenticationManagerAdapter.html)
-for leveraging your existing AuthenticationManager classes into the reactive application.
+for hoisting your existing, classic AuthenticationManager implementations into the reactive world.
 
-
-## Domain Users
- will wire in the a configured bean of type ReactiveAuthenticationManager, and if one is not available
-will create a [UserDetailsRepositoryReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.3.RELEASE/api/org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManager.html) 
-That defers to [ReactiveUserDetailsService](https://docs.spring.io/spring-security/site/docs/5.1.0.M1/api/org/springframework/security/core/userdetails/ReactiveUserDetailsService.html)  
-for user data lookup and credential storage.
+## Authenticion and Domain Users
+The baseline ReactiveAuthenticationManager that gets created by our HttpServerSecurityConfigurer bean is the[UserDetailsRepositoryReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.3.RELEASE/api/org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManager.html).
+This bean defers principal/credential operations to a [ReactiveUserDetailsService](https://docs.spring.io/spring-security/site/docs/5.1.0.M1/api/org/springframework/security/core/userdetails/ReactiveUserDetailsService.html)  
+for user data lookup and credential management.
 
 Spring comes with ready-made implemenations for storing and looking up users in the MapReactiveUserDetailsService - simple for demos - but we want to go a little in depth. Lets implement our own ReactiveAuthenticationManager which responds with our custom UserDetails objects.  
 

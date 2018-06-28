@@ -36,6 +36,8 @@ public class SecurityConfiguration {
                         .map(AuthorizationDecision::new)
                 )
                 .and()
+                .csrf()
+                .disable()
                 .httpBasic()
                 .and()
                 .build();
