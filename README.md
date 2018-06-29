@@ -80,71 +80,71 @@ First, the custom User domain object which implements UserDetails as prescribed 
 
 ExampleUser.java:
 
-@Data
-@Slf4j
-public class ExampleUser implements UserDetails {
-
-    private final Account account;
-    Collection<GrantedAuthority> authorities;
-
-    public ExampleUser(Account account, String[] roles) {
-        this.authorities = Arrays.asList(roles)
-                .stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-        this.account = account;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return account.getPassword();
-    }
-
-    @Override
-    public String getUsername() {
-        return account.getUsername();
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return account.isActive();
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return account.isActive();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return account.isActive();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return account.isActive();
-    }
-
     @Data
-    public static class Account {
+    @Slf4j
+    public class ExampleUser implements UserDetails {
 
-        private String username;
-        private String password;
-        private boolean active;
+        private final Account account;
+        Collection<GrantedAuthority> authorities;
 
-        public Account(String username, String password, boolean active) {
-            this.username = username;
-            this.password = password;
-            this.active = active;
+        public ExampleUser(Account account, String[] roles) {
+            this.authorities = Arrays.asList(roles)
+                    .stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+            this.account = account;
         }
 
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return this.authorities;
+        }
+
+        @Override
+        public String getPassword() {
+            return account.getPassword();
+        }
+
+        @Override
+        public String getUsername() {
+            return account.getUsername();
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return account.isActive();
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return account.isActive();
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return account.isActive();
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return account.isActive();
+        }
+
+        @Data
+        public static class Account {
+
+            private String username;
+            private String password;
+            private boolean active;
+
+            public Account(String username, String password, boolean active) {
+                this.username = username;
+                this.password = password;
+                this.active = active;
+            }
+
+        }
     }
-}
 
 We need to provide a way to get our users out of a user service, in this demo we will use a pre-programmed List() of users to hold any UserDetails we want to expose through the app. We provide a few convenicne methods to setting up the object. Of significant import is the [PasswordEncoder](https://docs.spring.io/spring-security/site/docs/4.2.4.RELEASE/apidocs/org/springframework/security/crypto/password/PasswordEncoder.html) that is used to encrypt/encode (defaults to bcrypt) plaintext.
 
@@ -166,7 +166,7 @@ UserDetailServiceBean.java:
                     user("loki", "ROLE_USER"),
                     user("zeus", "ROLE_ADMIN", "ROLE_USER")
             ));
-//...
+    //...
 
 Now, with users available, we can wire in a UserDetailService. Lets start with the easy-to-use MapReactiveUserDetailService. We'll bind it to a spring profile "map-reactive" for use case demonstration.
 
