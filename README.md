@@ -58,6 +58,8 @@ As an example:
 
     }
 
+Using and() methods lets us chain additional rules to our security configuration. In this case, we simply turn CSRF off, then proceed to tell Spring Security that we will be using HTTP Basic security. Calling the Build method is the last thing we do and returns our complete SecurityWebFilterChain.
+
 ## Reactive Authentication Components
 By default, a [HttpServerSecurityConfigurer](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html#securityMatcher-org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher) creates a base-line instance for [ServerHttpSecurity](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html), and will configure an instance of
 [ReactiveAuthenticationManager](https://docs.spring.io/spring-security/site/docs/5.0.x/api/org/springframework/security/authentication/ReactiveAuthenticationManager.html)
