@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -26,11 +27,9 @@ public class UserDetailServiceBeans {
 
     private static final Collection<UserDetails> users = new ArrayList<>(
             Arrays.asList(
-                    user("rjohnson", "ROLE_ADMIN"),
-                    user("cwalls", "ROLE_USER"),
-                    user("jlong", "ROLE_USER"),
-                    user("rwinch", "ROLE_ADMIN", "ROLE_USER"),
-                    user("mgray", "ROLE_ADMIN", "ROLE_USER")
+                    user("thor", "ROLE_ADMIN"),
+                    user("loki", "ROLE_USER"),
+                    user("zeus", "ROLE_ADMIN", "ROLE_USER")
             ));
 
     @Bean
@@ -39,28 +38,15 @@ public class UserDetailServiceBeans {
         return new MapReactiveUserDetailsService(users);
     }
 
-    @Bean
+    @Component
     @Profile("custom")
-    public ExampleUserDetailService customUserDetailService() {
-        return new ExampleUserDetailService(users);
-    }
-
-    @Slf4j
-    static class ExampleUserDetailService implements ReactiveUserDetailsService {
-        Map<String, UserDetails> userAccounts = new TreeMap<>();
-
-        public ExampleUserDetailService(Collection<UserDetails> userCollection) {
-            userCollection.forEach(u ->
-                    userAccounts.put(u.getUsername(), u)
-            );
-        }
+    class ExampleUserDetailService implements ReactiveUserDetailsService {
 
         @Override
         public Mono<UserDetails> findByUsername(String username) {
-            UserDetails user = userAccounts.getOrDefault(username, null);
-            return user == null ? Mono.empty() : Mono.just(user);
+            Optional<UserDetails> maybeUser = users.stream().filter(u -> u.getUsername().equalsIgnoreCase(username)).findFirst();
+            return maybeUser.map(Mono::just).orElse(Mono.empty());
         }
-
     }
 
 }
