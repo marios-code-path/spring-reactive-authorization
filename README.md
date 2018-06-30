@@ -21,6 +21,8 @@ How does Spring Security Webflux let us describe our security details?
 [ServerHttpSecurity](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html) surfaces components for customizing security behaviour across our web-stack through a DSL-like, fluent API. [ServerHttpSecurity](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.html) ultimately builds the state of a [SecurityWebFilterChain](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/SecurityWebFilterChain.html) which gets executed within the primary [WebFilter](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/server/WebFilter.html).
 
 Lets take a look at some of the components we'll use to setup security throughout a web request/response lifecycle, hence [ServerWebExchange](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/server/ServerWebExchange.html). We are given a variety of specifications that let us decide on which part of the [ServerWebExchange](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/server/ServerWebExchange.html) we can lock down.
+
+
 |Component|ServerHttpSecurity method|handling use cases|
 |-----|-----|-----|
 |AuthorizeExchangeSpec|.authorizeExchange()|pathMatchers, RBAC, custom Authorization|
@@ -31,6 +33,7 @@ Lets take a look at some of the components we'll use to setup security throughou
 |RequestCacheSpec|.requestCache()|handle saving httpRequest prior to authentication|
 |FormLoginSpec|.formLogin()|set login page, authentication behaviour on success/deny|
 |LogoutSpec|.logout()|set logout page and handler|
+
 
 NOTE: All of the above components may be disabled using it's .disable() method!
 
