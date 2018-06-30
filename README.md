@@ -22,7 +22,6 @@ How does Spring Security Webflux let us describe our security details?
 
 Lets take a look at some of the components we'll use to setup security throughout a web request/response lifecycle, hence [ServerWebExchange](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/server/ServerWebExchange.html). We are given a variety of specifications that let us decide on which part of the [ServerWebExchange](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/server/ServerWebExchange.html) we can lock down.
 
-
 |Component|ServerHttpSecurity method|handling use cases|
 |-----|-----|-----|
 |AuthorizeExchangeSpec|.authorizeExchange()|pathMatchers, RBAC, custom Authorization|
@@ -34,14 +33,17 @@ Lets take a look at some of the components we'll use to setup security throughou
 |FormLoginSpec|.formLogin()|set login page, authentication behaviour on success/deny|
 |LogoutSpec|.logout()|set logout page and handler|
 
-
 NOTE: All of the above components may be disabled using it's .disable() method!
+
+### Authorization Configuration
 
 Using the [AuthorizeExchangeSpec](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.AuthorizeExchangeSpec.html) by invoking `authorizeExchange()`, one can issue URI [PathPattern](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/util/matcher/PathPatternParserServerWebExchangeMatcher.html)'s that will match Access Control rules to paths on the service route.
 
 For example, `hasRole()` method is a shorthand for `hasAuthority()` method where the user's [GrantedAuthority](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/GrantedAuthority.html) (aka privilege) is checked for specific values. The `hasRole()` requires each authority be prefixed with 'ROLE_'.
 
 Finally, there is the `access()` method that takes a anonymous or otherwise custom implementation of [ReactiveAuthorizationManager](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/authorization/ReactiveAuthorizationManager.html). This is useful for in-house authorization implementations.
+
+### CSRF Configuration
 
 Another component for when configuring SecurityWebFilterChain is the [CsrfSpec](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/web/server/ServerHttpSecurity.CsrfSpec.html) enabled by calling `csrf()` method.  This lets us configure [CSRF](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet) tokens and handlers, or exclude CSRF entirely.
 
