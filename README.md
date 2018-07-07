@@ -1,8 +1,8 @@
-# Configuring Spring Security WebFlux
+# Configuring Reactive Spring Security WebFlux
 
-This article discuses the Spring Security configuration for apps that want to also use reactive [WebFlux](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html).
+Effective security can insulate our applications from ill effects of malicious, and accidental intent in many aspects of programming. Things like network security can only go so far in isolating harm to distributed computing applications. Prevent malicious hackers from gaining access to your systems by ensuring the tools meet the standards for your appcation.
 
-Spring Security [WebFlux](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html) is the framework that lets us declare request routing, and express security - like classical Spring Security - but using functional and reactive techniques.
+[Spring Security WebFlux](https://docs.spring.io/spring-security/site/docs/5.0.6.RELEASE/reference/htmlsingle/) is the framework that lets us declare security constructs to our ordinary [WebFlux](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html)applications. This is similar to classical Spring Security and [WebMVC](https://docs.spring.io/spring-framework/docs/3.2.x/spring-framework-reference/html/mvc.html)  with the major difference being the use of functional and reactive techniques.
 
 ## Getting Started
 
@@ -93,3 +93,7 @@ SecurityConfiguration.java:
     }
 
 Additionally the `and()` and `or()` and `disable()` methods lets us build another component's filter on the filter chain. In this case, we give our customized [ServerCsrfTokenRepository](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/csrf/ServerCsrfTokenRepository.html), and configure HTTP Basic. Calling `build()` returns the completed [SecurityWebFilterChain](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/server/SecurityWebFilterChain.html).
+
+# Review
+
+This brief overview should set you up for engaging the ServerHttpSecurity components. Following it's fluent API is a breeze once we get to know the components that we visit.
