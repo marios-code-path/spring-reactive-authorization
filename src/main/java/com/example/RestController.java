@@ -3,6 +3,7 @@ package com.example;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.reactive.function.server.RequestPredicates;
@@ -25,12 +26,12 @@ public class RestController {
 
     @GetMapping("/who-revised")
     Mono<String> whoRevised(@AuthenticationPrincipal UserDetails user) {
-            if(ExampleUser.class.isInstance(user))
-                    return Mono.just(user)
-                            .ofType(ExampleUser.class)
-                            .map( u -> "who/custom: " + u.getAccount().getPassword());
+        if (User.class.isInstance(user))
+            return Mono.just(user)
+                    .ofType(User.class)
+                    .map(u -> "who/custom: " + u.getUsername());
 
-                return Mono.just("who/map-reactive: " + user.getUsername());
+        return Mono.just("who/map-reactive: " + user.getUsername());
     }
 
     @Bean
